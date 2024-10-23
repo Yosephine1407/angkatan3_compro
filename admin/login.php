@@ -4,19 +4,23 @@ include 'koneksi.php';
 if (isset($_POST['login'])) {
     $email = $_POST['email'];
     $password = $_POST['password'];
+    // print_r($rowLogin);
+    // die;
 
 
     $queryLogin =  mysqli_query($koneksi, "SELECT * FROM user WHERE  email = '$email'");
     // mysqli_num_rows() : untuk melihat total data di dalam table
     if (mysqli_num_rows($queryLogin) > 0) {
         $rowLogin = mysqli_fetch_assoc($queryLogin);
-        if ($password = $rowLogin['password']) {
-            header("location:index.php");
+        if ($password == $rowLogin['password']) {
+            $_SESSION['nama'] = $rowLogin['nama'];
+            $_SESSION['id'] = $rowLogin['id'];
+            header('location:index.php');
         } else {
-            header("location:login.php?gagal");
+            header('location:login.php?login=gagal');
         }
     } else {
-        header("location:login.php?login=gagal");
+        header('location:login.php?login=gagal');
     }
 }
 ?>
@@ -154,7 +158,7 @@ if (isset($_POST['login'])) {
                         <h4 class="mb-2">Selamat Datang! 👋</h4>
                         <p class="mb-4">Silahkan Login</p>
 
-                        <form id="formAuthentication" class="mb-3" action="index.php" method="POST">
+                        <form id="formAuthentication" class="mb-3" action="" method="POST">
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email </label>
                                 <input
@@ -190,7 +194,7 @@ if (isset($_POST['login'])) {
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <button class="btn btn-primary d-grid w-100" type="submit">Masuk</button>
+                                <button class="btn btn-primary d-grid w-100" type="submit" name="login">Masuk</button>
                             </div>
                         </form>
 

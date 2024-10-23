@@ -1,15 +1,59 @@
 <?php
 session_start();
 include 'koneksi.php';
-$queryUser = mysqli_query($koneksi, "SELECT * FROM user");
 
-if (isset($_GET['delete'])) {
-    $id = $_GET['delete'];
+if (isset($_POST['simpan'])) {
+    $nama = $_POST['nama'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
 
-    $delete = mysqli_query($koneksi, "DELETE FROM user WHERE id = '$id'");
-    header("location:user.php?hapus=berhasil");
+    // $_POST : form input nama=''
+    // $_GET  : url ?param='nilai'
+    // $_FILES : dapat data dari input type file 
+    if (isset($_FILES['foto']['name'])) {
+        $nama_foto = $_FILES['foto']['name'];
+        $ukuran_foto = $_FILES['foto']['size'];
+
+        // png, jpg, jpeg
+        $ext = array('png', 'jpg', 'jpeg');
+        $extFoto = pathinfo($nama_foto, PATHINFO_EXTENSION);
+
+        // jika extensi foto tidak ada ext yang terdaftar di array ext
+        if (!in_array($extFoto, $ext)) {
+            echo "Ext tidak ditemukan";
+            die;
+        } else {
+            // pindahkan gambar dari tmp folder ke folder yang sudah kita buat
+
+            move_uploaded_file($_FILES['foto']['tmp_name'], 'upload/' . $nama_foto);
+            $insert = mysqli_query($koneksi, "INSERT INTO user(nama, email, password, foto) VALUES('$nama','$email','$password','$nama_foto')");
+        }
+    } else {
+        $insert = mysqli_query($koneksi, "INSERT INTO user(nama, email, password) VALUES('$nama','$email','$password')");
+    }
+    header("location:user.php?tambah=berhasil");
 }
-$rowUser = mysqli_fetch_assoc($queryUser)
+
+
+
+$id = isset($_GET['edit']) ? $_GET['edit'] : "";
+
+$queryEdit = mysqli_query($koneksi, "SELECT * FROM user WHERE id = '$id'");
+$rowEdit = mysqli_fetch_assoc($queryEdit);
+
+
+if (isset($_POST['edit'])) {
+    $nama = $_POST['nama'];
+    $email = $_POST['email'];
+
+    if (isset($_POST['password'])) {
+        $password = $_POST['password'];
+    } else {
+        $password = $rowEdit['password'];
+    }
+    $update = mysqli_query($koneksi, "UPDATE user SET nama='$nama', email='$email', password='$password' WHERE id = '$id'");
+    header("location:user.php?ubah=berhasil");
+}
 ?>
 <!DOCTYPE html>
 
@@ -25,13 +69,7 @@ $rowUser = mysqli_fetch_assoc($queryUser)
 =========================================================
  -->
 <!-- beautify ignore:start -->
-<html
-    lang="en"
-    class="light-style layout-menu-fixed"
-    dir="ltr"
-    data-theme="theme-default"
-    data-assets-path="../assets/"
-    data-template="vertical-menu-template-free">
+<html>
 
 <head>
     <meta charset="utf-8" />
@@ -72,43 +110,39 @@ $rowUser = mysqli_fetch_assoc($queryUser)
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="card">
-                                    <div class="card-header">Data User</div>
+                                    <div class="card-header"><?php echo isset($_GET['edit']) ? 'Edit' : 'Tambah' ?> User</div>
                                     <div class="card-body">
-                                        <?php if(isset($_GET['hapus'])): ?>
-                                        <div class="alert alert-success" role="alert">
-                                            Data berhasil dihapus
-                                        </div>
-                                        <?php endif?>
-                                        <div align="right" class="mb-3">
-                                            <a href="tambah-user.php" class="btn btn-primary">Tambah</a>
-                                        </div>
-                                        <table class="table table bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Nama</th>
-                                                    <th>Email</th>
-                                                    <th>Aksi</th>
-                                                </tr>
-                                            <tbody>
-                                                <?php $no = 1; ?>
-                                                <?php while ($rowUser = mysqli_fetch_assoc($queryUser)) { ?>
-                                                    <tr>
-                                                        <td><?php echo $no++ ?></td>
-                                                        <td><?php echo $rowUser['nama'] ?></td>
-                                                        <td><?php echo $rowUser['email'] ?></td>
-                                                        <td>
-                                                            <a href="tambah-user.php?edit=<?php echo $rowUser['id'] ?>" class="btn btn-success btn-sm">Edit</a>
-                                                            <span class="tf-icon bx bx-pencil bx-18px"></span>
-                                                            <a onclick="return confirm('Apakah anda yakin akan menghapus data ini??')"
-                                                                href="user.php?delete=<?php echo $rowUser['id'] ?>" class="btn btn-danger btn-sm">Delete</a>
-                                                            <span class="tf-icon bx bx-trash bx-18"></span>
-                                                        </td>
-                                                    </tr>
-                                                <?php } ?>
-                                            </tbody>
-                                            </thead>
-                                        </table>
+                                        <?php if (isset($_GET['hapus'])): ?>
+                                            <div class="alert alert-success" role="alert">
+                                                Data berhasil dihapus
+                                            </div>
+                                        <?php endif ?>
+                                        <form action="" method="POST" enctype="multipart/form-data">
+                                            <div class="mb-3 row">
+                                                <div class="col-sm-6">
+                                                    <label for="" class="form-label">Nama</label>
+                                                    <input type="text" class="form-control" name="nama" placeholder="Masukkan nama anda" required value="<?php echo isset($_GET['edit']) ? $rowEdit['nama']  : '' ?>">
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <label for="" class="form-label">Email</label>
+                                                    <input type="text" class="form-control" name="email" placeholder="Masukkan email anda" required value="<?php echo isset($_GET['edit']) ? $rowEdit['email'] : '' ?>">
+                                                </div>
+                                                <div class="mb-3-row">
+                                                    <div class="col-sm-12">
+                                                        <label for="" class="form-label">Password</label>
+                                                        <input type="password" name="password" placeholder="Masukkan password anda" class="form-control" id="">
+                                                    </div>
+                                                    <div class="mb-3-row">
+                                                        <div class="col-sm-12">
+                                                            <label for="" class="form-label">Foto</label>
+                                                            <input type="file" name="foto">
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <button class="btn btn-primary" name="<?php echo isset($_GET['edit']) ? 'edit' : 'simpan' ?>" type="submit">Simpan</button>
+                                                        </div>
+                                                    </div>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
